@@ -1,8 +1,20 @@
 # Neural-Emotion
+
 Emotion prediction and application with neural networks.
 
-## Description
+## Dependencies
 
-Trains a neural network with facial keypoint data and associated FACS emotion changes.
+* dlib
+* scikit image
+* nolearn
+* theano
+* lasagne
+* matplotlib
+* numpy, scipy stack
 
-## Dataset
+To install:
+
+```BASH
+cd Neural-Emotion
+sh dependencies.sh
+```
