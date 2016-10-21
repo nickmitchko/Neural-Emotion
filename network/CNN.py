@@ -52,19 +52,19 @@ class EmotionClassifier:
             # layer maxpool2
             maxpool2_pool_size=(2, 2),
             # dropout1
-            dropout1_p=0.5,
+            dropout1_p=0.1,
             # dense
             dense_num_units=256,
             dense_nonlinearity=lasagne.nonlinearities.rectify,
             # dropout2
-            dropout2_p=0.5,
+            dropout2_p=0.2,
             # output
             output_nonlinearity=lasagne.nonlinearities.softmax,
             output_num_units=8,
             # optimization method params
             regression=False,
             update=nesterov_momentum,
-            update_learning_rate=0.01,
+            update_learning_rate=0.06,
             update_momentum=0.9,
             max_epochs=10,
             verbose=1,
@@ -98,7 +98,6 @@ class EmotionClassifier:
                 x_train[i] = self.get_face_image(os.path.join(root, fs[-1]))
                 y_train[i] = emotion
                 i += 1
-            print(i)
         return x_train.reshape(-1,1,self.face_sz, self.face_sz), y_train
 
     def get_keypoints(self, image_file):
@@ -178,3 +177,6 @@ class EmotionClassifier:
         :param y_train: Training y values
         """
         self.network.fit(x_train, y_train)
+
+    def predict(self, image):
+        return self.network.predict(image)
