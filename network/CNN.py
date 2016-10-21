@@ -7,6 +7,7 @@ from lasagne import layers
 from lasagne.updates import nesterov_momentum
 from nolearn.lasagne import NeuralNet
 from skimage import io as imageio
+from skimage.color import rgb2gray
 
 
 class EmotionClassifier:
@@ -18,8 +19,11 @@ class EmotionClassifier:
         self.Emotion_dir = self.data_dir + "Emotion/"
         self.detector = dlib.get_frontal_face_detector()
         self.predictor = dlib.shape_predictor(face_data)
-        self.width = 480
-        self.height = 640
+        self.face_sz = 230
+        self.extra_face_space = 0
+        self.face_sz += self.extra_face_space
+        self.width = self.face_sz
+        self.height = self.face_sz
         self.show_img = show_image
         self.network = NeuralNet(
             layers=[('input', layers.InputLayer),
@@ -33,7 +37,7 @@ class EmotionClassifier:
                     ('output', layers.DenseLayer),
                     ],
             # input layer
-            input_shape=(1, self.width, self.height),
+            input_shape=(None, 1, self.face_sz, self.face_sz),
             # layer conv2d1
             conv2d1_num_filters=32,
             conv2d1_filter_size=(5, 5),
@@ -56,7 +60,7 @@ class EmotionClassifier:
             dropout2_p=0.5,
             # output
             output_nonlinearity=lasagne.nonlinearities.softmax,
-            output_num_units=7,
+            output_num_units=8,
             # optimization method params
             regression=False,
             update=nesterov_momentum,
@@ -77,22 +81,25 @@ class EmotionClassifier:
         x_train = np.zeros((1186, self.width, self.height), dtype='float32')
         y_train = np.zeros(1186, dtype='int32')
         i = 0
+        x = 0
+        y = 0
         for root, name, files in os.walk(self.picture_dir):
-            if self.show_img:
-                self.win.clear_overlay()
             files = [file for file in files if file.endswith(".png")]
             if len(files) == 0:
                 continue
             fs = sorted(files, key=lambda x: x[:-4])
             emotion = self.get_emotion(fs[-1])
+            # sampleImg = self.get_face_image(os.path.join(root, fs[0]))
+            # print(sampleImg.shape)
             if emotion != -1:
-                x_train[i] = self.get_image(os.path.join(root, fs[0]))  # add the key-points of a neutral face
+                x_train[i] = self.get_face_image(os.path.join(root, fs[0]))  # add the key-points of a neutral face
                 y_train[i] = 0  # emotion code of a neutral face
                 i += 1
-                x_train[i] = self.get_image(os.path.join(root, fs[-1]))
+                x_train[i] = self.get_face_image(os.path.join(root, fs[-1]))
                 y_train[i] = emotion
                 i += 1
-        return x_train, y_train
+            print(i)
+        return x_train.reshape(-1,1,self.face_sz, self.face_sz), y_train
 
     def get_keypoints(self, image_file):
         """
@@ -116,8 +123,27 @@ class EmotionClassifier:
             self.win.add_overlay(details)
         return landmarks
 
-    def get_image(self, filename):
-        # TODO: read image f
+    def get_face_image(self, filename):
+        img = imageio.imread(filename)
+        details = self.detector(img, 1)
+        x_min = self.width
+        y_min = self.height
+        for i, j in enumerate(details):
+            shape = self.predictor(img, j)
+            for k in range(0, 68):
+                part = shape.part(k)
+                if part.x < x_min:
+                    x_min = part.x
+                if part.y < y_min :
+                    y_min = part.y
+        img = np.asarray(img, dtype='float32') / 255
+        if len(img.shape) == 3:
+            img = rgb2gray(img)
+        x_min -= self.extra_face_space
+        y_min -= self.extra_face_space
+        return img[x_min:x_min+self.face_sz, y_min: y_min+self.face_sz]
+
+    def get_full_image(self, filename):
         img = imageio.imread(filename, True)
         img = np.asarray(img, dtype='float32') / 255
         return img[0:self.width, 0:self.height]

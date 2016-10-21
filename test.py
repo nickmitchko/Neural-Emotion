@@ -6,5 +6,5 @@ from skimage import io as imageio
 E = CNN.EmotionClassifier(face_data="FaceData/landmarks.dat")
 X, Y = E.load_dataset()
 E.fit(X, Y)
-img = E.get_image(os.path.join("./", "test.jpg"))
+img = E.get_face_image(os.path.join("./", "test.jpg"))
 print(E.network.predict(img))
