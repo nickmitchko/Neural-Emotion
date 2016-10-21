@@ -12,7 +12,7 @@ from skimage.color import rgb2gray
 
 class EmotionClassifier:
     def __init__(self, data_directory="/home/nicholai/Documents/Emotion Files/", face_data="../FaceData/landmarks.dat",
-                 show_image=False):
+                 show_image=False, epochs=10):
         self.data_dir = data_directory
         self.picture_dir = self.data_dir + "cohn-kanade-images/"
         self.FACS_dir = self.data_dir + "FACS/"
@@ -52,27 +52,27 @@ class EmotionClassifier:
             # layer maxpool2
             maxpool2_pool_size=(2, 2),
             # dropout1
-            dropout1_p=0.1,
+            dropout1_p=0.5,
             # dense
             dense_num_units=256,
             dense_nonlinearity=lasagne.nonlinearities.rectify,
             # dropout2
-            dropout2_p=0.2,
+            dropout2_p=0.5,
             # output
             output_nonlinearity=lasagne.nonlinearities.softmax,
             output_num_units=8,
             # optimization method params
             regression=False,
             update=nesterov_momentum,
-            update_learning_rate=0.06,
+            update_learning_rate=0.01,
             update_momentum=0.9,
-            max_epochs=10,
+            max_epochs=epochs,
             verbose=1,
         )
         if self.show_img:
             self.win = dlib.image_window()
 
-    def load_dataset(self):
+    def load_training_set(self):
         """
         Loads the CK+ data-set of images, processes the facial key-points of each face, and returns the emotion codes
         of each participant 0-7 (i.e. 0=neutral, 1=anger, 2=contempt, 3=disgust, 4=fear, 5=happy, 6=sadness, 7=surprise)
@@ -98,7 +98,8 @@ class EmotionClassifier:
                 x_train[i] = self.get_face_image(os.path.join(root, fs[-1]))
                 y_train[i] = emotion
                 i += 1
-        return x_train.reshape(-1,1,self.face_sz, self.face_sz), y_train
+            print(i)
+        return x_train.reshape(-1, 1, self.face_sz, self.face_sz), y_train
 
     def get_keypoints(self, image_file):
         """
@@ -170,7 +171,7 @@ class EmotionClassifier:
             return line[0]
         return -1
 
-    def fit(self, x_train, y_train):
+    def train(self, x_train, y_train):
         """
         Fits training data to the Convolutional Neural Network
         :param x_train: Training x values
@@ -180,3 +181,9 @@ class EmotionClassifier:
 
     def predict(self, image):
         return self.network.predict(image)
+
+    def save_network_state(self, savename="model.npz"):
+        self.network.save_params_to(savename)
+
+    def load_network_state(self, filename="model.npz"):
+        self.network.load_params_from(filename)
