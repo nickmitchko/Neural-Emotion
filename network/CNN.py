@@ -182,8 +182,10 @@ class EmotionClassifier:
     def predict(self, image):
         return self.network.predict(image)
 
-    def save_network_state(self, savename="model.npz"):
-        self.network.save_params_to(savename)
+    def save_network_state(self, paramsname="params.npz", weightsname="weights.dat"):
+        self.network.save_weights_to(weightsname)
+        self.network.save_params_to(paramsname)
 
-    def load_network_state(self, filename="model.npz"):
-        self.network.load_params_from(filename)
+    def load_network_state(self, paramsname="params.npz", weightsname="weights.dat"):
+        self.network.load_weights_from(weightsname)
+        self.network.load_params_from(paramsname)
