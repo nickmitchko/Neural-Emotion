@@ -53,7 +53,7 @@ class EmotionClassifier:
             # conv2d2_nonlinearity=lasagne.nonlinearities.rectify,
             # conv2d2_W=lasagne.init.GlorotUniform(),
             # layer maxpool1
-            maxpool1_pool_size=(4,4),
+            maxpool1_pool_size=(5, 5),
             # layer conv2d3
             # conv2d3_num_filters=32,
             # conv2d3_filter_size=(5, 5),
@@ -65,13 +65,13 @@ class EmotionClassifier:
             conv2d4_nonlinearity=lasagne.nonlinearities.rectify,
             conv2d4_W=lasagne.init.GlorotUniform(),
             # layer maxpool2
-            maxpool2_pool_size=(4, 4),
+            maxpool2_pool_size=(5, 5),
             # dropout1a
             dropout1_p=dropout_1,
             # dense
             learningLayer_num_units=1024,
             learningLayer_nonlinearity=lasagne.nonlinearities.rectify,
-            learningLayer1_num_units=1024,
+            learningLayer1_num_units=512,
             learningLayer1_nonlinearity=lasagne.nonlinearities.rectify,
             # # dropout2
             # # dropout2_p=dropout_2,
@@ -84,10 +84,10 @@ class EmotionClassifier:
             # optimization method params
             regression=False,
             update=nesterov_momentum,
-            update_learning_rate=theano.shared(np.cast['float32'](0.1)),
+            update_learning_rate=theano.shared(np.cast['float32'](0.05)),
             update_momentum=theano.shared(np.cast['float32'](0.9)),
             on_epoch_finished=[
-                AdjustVariable('update_learning_rate', start=0.01, stop=0.001),
+                AdjustVariable('update_learning_rate', start=0.05, stop=0.01),
                 AdjustVariable('update_momentum', start=0.9, stop=0.999),
             ],
             max_epochs=epochs,
@@ -102,8 +102,8 @@ class EmotionClassifier:
         of each participant 0-7 (i.e. 0=neutral, 1=anger, 2=contempt, 3=disgust, 4=fear, 5=happy, 6=sadness, 7=surprise)
         :return: Training X (X_Train) and Y (y_train) Data as well as testing X (X_test) and Y (y_test) Data
         """
-        x_train = np.zeros((1186, self.width, self.height), dtype='float32')
-        y_train = np.zeros(1186, dtype='int32')
+        x_train = np.zeros((382, self.width, self.height), dtype='float32')
+        y_train = np.zeros(382, dtype='int32')
         i = 0
         for root, name, files in os.walk(self.picture_dir):
             files = [file for file in files if file.endswith(".png")]
@@ -115,6 +115,8 @@ class EmotionClassifier:
             # print(sampleImg.shape)
             if emotion != -1:
                 if i % 7 == 0:
+                    # self.show_faces(os.path.join(root, fs[0]))
+                    # self.show_faces(os.path.join(root, fs[-1]))
                     x_train[i] = self.get_face_image(os.path.join(root, fs[0]))  # add the key-points of a neutral face
                     y_train[i] = 0  # emotion code of a neutral face
                     i += 1
@@ -177,12 +179,23 @@ class EmotionClassifier:
             for k in range(0, 68):
                 part = shape.part(k)
                 img[part.y][part.x] = 255
-        img = resize(img[j.left():j.right(), j.top():j.bottom()], output_shape=(self.face_sz, self.face_sz),
+        img = resize(img[j.top():j.bottom(), j.left():j.right()], output_shape=(self.face_sz, self.face_sz),
                      preserve_range=True)
         if len(img.shape) == 3:
             img = rgb2gray(img)
         img = np.asarray(img, dtype='float32') / 255
         return img
+
+    def show_faces(self, filename):
+        img = imageio.imread(filename)
+        details = self.detector(img, 1)
+        for i, j in enumerate(details):
+            shape = self.predictor(img, j)
+            for k in range(0, 68):
+                part = shape.part(k)
+                img[part.y][part.x] = 255
+        if self.show_img:
+            self.win.set_image(img[j.top():j.bottom(), j.left():j.right()])
 
     def get_full_image(self, filename):
         img = imageio.imread(filename, True)
