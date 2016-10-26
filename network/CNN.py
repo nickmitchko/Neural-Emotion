@@ -21,7 +21,7 @@ class EmotionClassifier:
         self.Emotion_dir = self.data_dir + "Emotion/"
         self.detector = dlib.get_frontal_face_detector()
         self.predictor = dlib.shape_predictor(face_data)
-        self.face_sz = 100
+        self.face_sz = 200
         self.extra_face_space = 0
         self.face_sz += self.extra_face_space
         self.width = self.face_sz
@@ -30,41 +30,54 @@ class EmotionClassifier:
         self.network = NeuralNet(
             layers=[('input', layers.InputLayer),
                     ('conv2d1', layers.Conv2DLayer),
+                    # ('conv2d2', layers.Conv2DLayer),
                     ('maxpool1', layers.MaxPool2DLayer),
-                    ('conv2d2', layers.Conv2DLayer),
+                    # ('conv2d3', layers.Conv2DLayer),
+                    ('conv2d4', layers.Conv2DLayer),
                     ('maxpool2', layers.MaxPool2DLayer),
                     ('dropout1', layers.DropoutLayer),
-                    ('dense', layers.DenseLayer),
-                    ('dropout2', layers.DropoutLayer),
-                    ('dense1', layers.DenseLayer),
-                    ('gaussian1', layers.GaussianNoiseLayer),
+                    ('learningLayer', layers.DenseLayer),
+                    ('learningLayer1', layers.DenseLayer),
                     ('output', layers.DenseLayer),
                     ],
             # input layer
             input_shape=(None, 1, self.face_sz, self.face_sz),
             # layer conv2d1
-            conv2d1_num_filters=64,
+            conv2d1_num_filters=32,
             conv2d1_filter_size=(5, 5),
             conv2d1_nonlinearity=lasagne.nonlinearities.rectify,
             conv2d1_W=lasagne.init.GlorotUniform(),
-            # layer maxpool1
-            maxpool1_pool_size=(2, 2),
             # layer conv2d2
-            conv2d2_num_filters=32,
-            conv2d2_filter_size=(5, 5),
-            conv2d2_nonlinearity=lasagne.nonlinearities.rectify,
+            # conv2d2_num_filters=32,
+            # conv2d2_filter_size=(5, 5),
+            # conv2d2_nonlinearity=lasagne.nonlinearities.rectify,
+            # conv2d2_W=lasagne.init.GlorotUniform(),
+            # layer maxpool1
+            maxpool1_pool_size=(4,4),
+            # layer conv2d3
+            # conv2d3_num_filters=32,
+            # conv2d3_filter_size=(5, 5),
+            # conv2d3_nonlinearity=lasagne.nonlinearities.rectify,
+            # conv2d3_W=lasagne.init.GlorotUniform(),
+            # layer conv2d4
+            conv2d4_num_filters=32,
+            conv2d4_filter_size=(5, 5),
+            conv2d4_nonlinearity=lasagne.nonlinearities.rectify,
+            conv2d4_W=lasagne.init.GlorotUniform(),
             # layer maxpool2
-            maxpool2_pool_size=(2, 2),
+            maxpool2_pool_size=(4, 4),
             # dropout1a
             dropout1_p=dropout_1,
             # dense
-            dense_num_units=1024,
-            dense_nonlinearity=lasagne.nonlinearities.rectify,
-            # dropout2
-            dropout2_p=dropout_2,
-            # dense1
-            dense1_num_units=256,
-            dense1_nonlinearity=lasagne.nonlinearities.rectify,
+            learningLayer_num_units=1024,
+            learningLayer_nonlinearity=lasagne.nonlinearities.rectify,
+            learningLayer1_num_units=1024,
+            learningLayer1_nonlinearity=lasagne.nonlinearities.rectify,
+            # # dropout2
+            # # dropout2_p=dropout_2,
+            # # dense1
+            # dense1_num_units=256,
+            # dense1_nonlinearity=lasagne.nonlinearities.rectify,
             # output
             output_nonlinearity=lasagne.nonlinearities.softmax,
             output_num_units=8,
@@ -74,7 +87,7 @@ class EmotionClassifier:
             update_learning_rate=theano.shared(np.cast['float32'](0.1)),
             update_momentum=theano.shared(np.cast['float32'](0.9)),
             on_epoch_finished=[
-                AdjustVariable('update_learning_rate', start=0.1, stop=0.0001),
+                AdjustVariable('update_learning_rate', start=0.01, stop=0.001),
                 AdjustVariable('update_momentum', start=0.9, stop=0.999),
             ],
             max_epochs=epochs,
@@ -101,9 +114,10 @@ class EmotionClassifier:
             # sampleImg = self.get_face_image(os.path.join(root, fs[0]))
             # print(sampleImg.shape)
             if emotion != -1:
-                x_train[i] = self.get_face_image(os.path.join(root, fs[0]))  # add the key-points of a neutral face
-                y_train[i] = 0  # emotion code of a neutral face
-                i += 1
+                if i % 7 == 0:
+                    x_train[i] = self.get_face_image(os.path.join(root, fs[0]))  # add the key-points of a neutral face
+                    y_train[i] = 0  # emotion code of a neutral face
+                    i += 1
                 x_train[i] = self.get_face_image(os.path.join(root, fs[-1]))
                 y_train[i] = emotion
                 i += 1
