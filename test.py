@@ -1,15 +1,22 @@
 from network import CNN
-import os
-import lasagne
 import numpy as np
-from lasagne import layers
-from lasagne.updates import nesterov_momentum
-from nolearn.lasagne import NeuralNet
+import os
 
-approx_epoch_dur_seconds = 0.9
-training_time_hours = 10
-training_amt = (60 * 60 * training_time_hours) / approx_epoch_dur_seconds
-E = CNN.EmotionClassifier(data_directory="../../Emotion Files/", face_data="FaceData/landmarks.dat", epochs=training_amt, show_image=True)
+E = CNN.EmotionClassifier(face_data="FaceData/landmarks.dat",
+                          epochs=500,
+                          learning_start=0.15,
+                          learning_end=0.0001,
+                          big_dot=False,
+                          face_padding=25,
+                          dropout_1=0.5,
+                          scaled_size=200,
+                          augment_data=True)
 X, Y = E.load_training_set()
-E.train(X, Y, training_amt-1)
+E.load_network_state()
+E.train(X, Y)
+test = np.zeros((2, E.face_sz, E.face_sz), dtype='float32')
+test[0] = E.get_face_image('./daria.jpg')
+test[1] = E.get_face_image('./testangry.jpg')
+test = test.reshape(-1, 1, E.face_sz, E.face_sz)
+print(E.predict(test))
 E.save_network_state()
