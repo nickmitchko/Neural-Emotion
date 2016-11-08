@@ -7,7 +7,7 @@ import theano
 
 
 class EmotionClassifier:
-    def __init__(self, face_size=192, epochs=100):
+    def __init__(self, face_size=192, epochs=100, learning_rate=theano.shared(np.cast['float32'](0.1))):
         self.network = NeuralNet(
             layers=[('input', InputLayer),
                     ('conv1', Conv2DLayer),
@@ -86,6 +86,7 @@ class EmotionClassifier:
             regression=False,
 
             update=adadelta,
+            update_learning_rate=learning_rate,
             # update_momentum=theano.shared(np.cast['float32'](0.9)),
             # on_epoch_finished=[
             #    AdjustVariable('update_learning_rate', start=learning_start, stop=learning_end),
