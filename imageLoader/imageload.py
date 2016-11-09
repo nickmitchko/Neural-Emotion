@@ -71,6 +71,29 @@ def extract_faces(filename, face_detector, face_size=100, padding=25, blur=True)
     return numpy.asarray(faces[0:counter], dtype='float32') / 255
 
 
+def extract_faces_with_coords(filename, face_detector, face_size=100, padding=25, blur=True):
+    img = gaussian_filter(ImageIO.imread(filename), sigma=1) if blur else ImageIO.imread(filename)
+    #   make sure the image is grayscale
+    detector = face_detector(img, 1)
+    #   at a max we allocate at most 10 faces
+    if len(img.shape) == 3:
+        img = rgb2gray(img)
+    faces = numpy.zeros((10, face_size, face_size), dtype='float32')
+    coords = 10*[[]]
+    # lets keep a counter so we know when to cut off our face array
+    counter = 0
+    for i, j in enumerate(detector):
+        faces[i] = resize(img[j.top()-padding:
+                                            j.bottom()+padding,
+                                            j.left()-padding:
+                                            j.right()+padding],
+                     output_shape=(face_size, face_size),
+                     preserve_range=True)
+        coords[i] = [j.top(), j.bottom(), j.left(), j.right()]
+        counter += 1
+    return numpy.asarray(faces[0:counter], dtype='float32') / 255, coords[0:counter]
+
+
 def read_emotion(filename, ckdirectory):
     #   emotiondirectory: directory in relation to ckdirectory that holds the emotion files (./Emotion)
     emotion_directory = ckdirectory + 'Emotion/'
