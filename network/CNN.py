@@ -51,7 +51,7 @@ class EmotionClassifier:
 
             pool2_pool_size=(2, 2),
 
-            conv5_num_filters=32,
+            conv5_num_filters=64,
             conv5_filter_size=(3, 3),
             conv5_nonlinearity=lasagne.nonlinearities.rectify,
             conv5_W=lasagne.init.GlorotUniform(),
@@ -75,7 +75,7 @@ class EmotionClassifier:
 
             pool4_pool_size=(2, 2),
 
-            hidden1_num_units=2048,
+            hidden1_num_units=4096,
             hidden1_nonlinearity=lasagne.nonlinearities.rectify,
 
             hidden2_num_units=2048,
@@ -89,13 +89,14 @@ class EmotionClassifier:
             update_learning_rate=learning_rate,
             # update_momentum=theano.shared(np.cast['float32'](0.9)),
             # on_epoch_finished=[
-            #    AdjustVariable('update_learning_rate', start=learning_start, stop=learning_end),
-            #    AdjustVariable('update_momentum', start=0.9, stop=0.999),
-            #],
+            #     EarlyStopping(patience=20)
+            #     AdjustVariable('update_learning_rate', start=learning_start, stop=learning_end),
+            #     AdjustVariable('update_momentum', start=0.9, stop=0.999),
+            # ],
             # batch_iterator_train=ShufflingBatchIteratorMixin,
             # batch_iterator_train=BatchIterator(251, shuffle=True),
             max_epochs=epochs,
-            verbose=1,
+            verbose=2
         )
 
     def train(self, x_train, y_train, epoch=0):
@@ -145,3 +146,25 @@ class ShufflingBatchIteratorMixin(object):
         self.X, self.y = shuffle(self.X, self.y)
         for res in super(ShufflingBatchIteratorMixin, self).__iter__():
             yield res
+
+
+class EarlyStopping(object):
+    def __init__(self, patience=100):
+        self.patience = patience
+        self.best_valid = np.inf
+        self.best_valid_epoch = 0
+        self.best_weights = None
+
+    def __call__(self, nn, train_history):
+        current_valid = train_history[-1]['valid_loss']
+        current_epoch = train_history[-1]['epoch']
+        if current_valid < self.best_valid:
+            self.best_valid = current_valid
+            self.best_valid_epoch = current_epoch
+            self.best_weights = nn.get_all_params_values()
+        elif self.best_valid_epoch + self.patience < current_epoch:
+            print("Early stopping.")
+            print("Best valid loss was {:.6f} at epoch {}.".format(
+                self.best_valid, self.best_valid_epoch))
+            nn.load_params_from(self.best_weights)
+            raise StopIteration()

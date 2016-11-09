@@ -38,7 +38,6 @@ while True:
     enter = input("\r\nPress Enter to Train Network\nType Anything else to skip this round of training\r\n>")
     if str(enter).lower() is not "":
         break
-
     emotion.train(train_x, train_y, 40)
 save = input("Do you want to save the training? y/n\r\n>")
 if str(save).lower() == "y":
