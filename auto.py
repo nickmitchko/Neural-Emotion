@@ -31,11 +31,18 @@ def predict_file(filename):
 
 
 def write_files(files, results, coords):
-    for i, file in enumerate(files):
-        f = open(file[:-4]+str(i)+".out", 'w+')
-        obj = [int(results[i]), int(coords[i][0]), int(coords[i][1]), int(coords[i][2]), int(coords[i][3])]
-        print(results)
-        json.dump(obj, f)
+    try:
+        for i, file in enumerate(files):
+            f = open(file[:-4]+str(i)+".out", 'w+')
+            obj = [int(results[i]), int(coords[i][0]), int(coords[i][1]), int(coords[i][2]), int(coords[i][3])]
+            print(results)
+            json.dump(obj, f)
+    except Exception:
+        for i, file in enumerate(files):
+            f = open(file[:-4]+str(i)+".out", 'w+')
+            obj = [8, 0, 0, 0, 0]
+            print("Face not detected")
+            json.dump(obj, f)
 
 
 def get_emotion_from_code(emotion=0):
@@ -48,15 +55,16 @@ def move_files(files):
 
 
 i = 1
+print("Ready..")
 while True:
     files = search_in_files()
-    try:
-        if len(files) > 0:
-            print("Found File:" + str(i))
-            i += 1
+    if len(files) > 0:
+        print("Found File:" + str(i))
+        i += 1
+        try:
             emotions, coords = predict_file(files[0])
             write_files(files, emotions, coords)
-            move_files(files)
-    except Exception:
-        pass
+        except Exception:
+            print("Error in facial prediction")
+        move_files(files)
     sleep(0.05)
