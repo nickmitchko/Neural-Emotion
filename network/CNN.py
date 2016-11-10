@@ -86,7 +86,6 @@ class EmotionClassifier:
             regression=False,
 
             update=adadelta,
-            update_learning_rate=learning_rate,
             # update_momentum=theano.shared(np.cast['float32'](0.9)),
             # on_epoch_finished=[
             #     EarlyStopping(patience=20)

@@ -15,7 +15,6 @@ emotions = ["Contentness", "Happiness", "Sadness", "Surprise", "Fear", "Anger", 
 
 
 def search_in_files(dir_="/in/"):
-    print(os.getcwd() + dir_)
     for root, name, files in os.walk(os.getcwd() + dir_):
         files = sorted([file for file in files if file.endswith(".png") or file.endswith(".jpg")], key=lambda x: x[:-4])
         fnames = len(files)*[os.getcwd() + dir_]
@@ -28,15 +27,14 @@ def search_in_files(dir_="/in/"):
 def predict_file(filename):
     faces, coords = imageload.extract_faces_with_coords(filename, face_detector, face_size=196)
     results = network.predict(faces.reshape(-1, 1, 196, 196))
-    print(coords)
-    print(results)
     return results, coords
 
 
 def write_files(files, results, coords):
     for i, file in enumerate(files):
-        f = open(file+str(i)+".out", 'w+')
+        f = open(file[:-4]+str(i)+".out", 'w+')
         obj = [int(results[i]), int(coords[i][0]), int(coords[i][1]), int(coords[i][2]), int(coords[i][3])]
+        print(results)
         json.dump(obj, f)
 
 
@@ -49,11 +47,16 @@ def move_files(files):
         os.remove(file)
 
 
+i = 1
 while True:
     files = search_in_files()
-    print("Search")
-    if len(files) > 0:
-        emotions, coords = predict_file(files[0])
-        write_files(files, emotions, coords)
-        move_files(files)
+    try:
+        if len(files) > 0:
+            print("Found File:" + str(i))
+            i += 1
+            emotions, coords = predict_file(files[0])
+            write_files(files, emotions, coords)
+            move_files(files)
+    except Exception:
+        pass
     sleep(0.05)

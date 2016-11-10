@@ -13,7 +13,9 @@ def load_ck_set(ckdirectory='/home/nicholai/Documents/Emotion Files/',
                 emotion_file_depth=4,
                 augmentation=True,
                 initial_blur=True):
-    total_size = 2328
+    total_size = 291*emotion_file_depth
+    if augmentation:
+        total_size *= 8
     face_detector = dlib.get_frontal_face_detector()
     #   The independent values set
     #   A set of picture images with height and width equal to imagesize
@@ -36,17 +38,32 @@ def load_ck_set(ckdirectory='/home/nicholai/Documents/Emotion Files/',
         emotion_of_pictureset = read_emotion(files[-1], ckdirectory)
         if emotion_of_pictureset != -1 and len(files) > 10:
             for j in range(0, emotion_file_depth):
-                print_counter()
                 x[i] = extract_faces(os.path.join(root, files[0-j]), face_detector, face_size=facesize, blur=initial_blur)[0]
                 y[i] = 0 if j==0 else emotion_of_pictureset
                 i += 1
+                print('{}: {}'.format(i, emotion_of_pictureset))
                 if augmentation:
-                    print_counter()
-                    x[i] = numpy.fliplr(x[i-1])
-                    y[i] = y[i-1]
+                    x[i] = numpy.rot90(x[i - 1], k = 1)
+                    y[i] = y[i - 1]
                     i += 1
-            if i % 100 == 0:
-                print(i)
+                    x[i] = numpy.rot90(x[i - 2], k = 3)
+                    y[i] = y[i - 1]
+                    i += 1
+                    x[i] = numpy.flipud(x[i - 3])
+                    y[i] = y[i - 1]
+                    i += 1
+                    x[i] = numpy.fliplr(x[i - 4])
+                    y[i] = y[i - 1]
+                    i += 1
+                    x[i] = numpy.rot90(x[i - 1], k=1)
+                    y[i] = y[i - 1]
+                    i += 1
+                    x[i] = numpy.rot90(x[i - 2], k=3)
+                    y[i] = y[i - 1]
+                    i += 1
+                    x[i] = numpy.flipud(x[i - 3])
+                    y[i] = y[i - 1]
+                    i += 1
     return x.reshape(-1, 1, facesize, facesize), y
 
 

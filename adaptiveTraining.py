@@ -13,7 +13,7 @@ def get_network(lr=theano.shared(np.cast['float32'](0.1)), load=False):
 
 
 def get_train_test():
-    x, y = imageload.load_ck_set()
+    x, y = imageload.load_ck_set(emotion_file_depth=8)
     x, y = sklearn.utils.shuffle(x, y, random_state=42)
     split_point = int(x.shape[0] * 0.70)
     return x[:split_point], y[:split_point], x[split_point:], y[:split_point]
@@ -21,9 +21,8 @@ def get_train_test():
 learning_rates = [
     theano.shared(np.cast['float32'](0.15))
 ]
-training_amt = 500
+training_amt = 100
 x, y, testx, testy = get_train_test()
-for i, rate in enumerate(learning_rates):
-    network = get_network(lr=rate)
-    network.train(x,y, epoch=training_amt)
-    network.save_network_state("0.15_lr.npz")
+network = get_network(load=False)
+network.train(x,y, epoch=training_amt)
+network.save_network_state("0.15_lr.npz")
