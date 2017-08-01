@@ -57,14 +57,12 @@ def move_files(files):
 i = 1
 print("Ready..")
 while True:
-    files = search_in_files()
-    if len(files) > 0:
-        print("Found File:" + str(i))
-        i += 1
+    files = serach_in_files()
+    for f in files:
         try:
-            emotions, coords = predict_file(files[0])
-            write_files(files, emotions, coords)
+            emotions, coords = predict_file(f)
+            write_files([f], emotions, coords)
         except Exception:
             print("Error in facial prediction")
-        move_files(files)
+    move_files(files)
     sleep(0.05)
